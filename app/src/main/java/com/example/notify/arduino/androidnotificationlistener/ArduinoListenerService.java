@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
@@ -23,6 +24,11 @@ public class ArduinoListenerService extends NotificationListenerService {
     protected static final String NOTIFICATION_REMOVED_ACTION =
             "com.example.notify.arduino.androidnotificationlistener" +
                     ".NOTIFICATION_LISTENER_REMOVED_ACTION";
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return super.onBind(intent);
+    }
 
     @Override
     public void onCreate() {
@@ -102,4 +108,3 @@ public class ArduinoListenerService extends NotificationListenerService {
     }
 
 }
-
