@@ -10,8 +10,6 @@ import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
-import com.example.notify.arduino.bluetoothcontrol.BluetoothConnection;
-
 /**
  * Created by mohammed on 1/23/18.
  */
@@ -35,7 +33,6 @@ public class ArduinoListenerService extends NotificationListenerService {
     @Override
     public void onCreate() {
         super.onCreate();
-
         IntentFilter filter = new IntentFilter();
         filter.addAction(NOTIFICATION_POSTED_ACTION);
         filter.addAction(NOTIFICATION_REMOVED_ACTION);
@@ -88,11 +85,11 @@ public class ArduinoListenerService extends NotificationListenerService {
         Log.i(TAG,"ID :" + sbn.getId() + "\t" + getTickerText(sbn.getNotification())
                 + "\t" + sbn.getPackageName());
 
-        Intent intent = new Intent(NOTIFICATION_POSTED_ACTION);
+        Intent intent = new  Intent(NOTIFICATION_POSTED_ACTION);
         intent.putExtra("package_name", sbn.getPackageName());
         intent.putExtra("notification_text", getTickerText(sbn.getNotification()));
         //intent.putExtra("notification_icon", sbn.getNotification().getSmallIcon());
-        intent.putExtra("status_bar_notification", sbn);
+        //intent.putExtra("status_bar_notification", sbn);
         sendBroadcast(intent);
     }
 
@@ -102,11 +99,11 @@ public class ArduinoListenerService extends NotificationListenerService {
         Log.i(TAG,"ID :" + sbn.getId() + "\t" + getTickerText(sbn.getNotification())
                 +"\t" + sbn.getPackageName());
 
-        Intent intent = new Intent(NOTIFICATION_REMOVED_ACTION);
+        Intent intent = new  Intent(NOTIFICATION_REMOVED_ACTION);
         intent.putExtra("package_name", sbn.getPackageName());
         intent.putExtra("notification_text", getTickerText(sbn.getNotification()));
         //intent.putExtra("notification_icon", sbn.getNotification().getSmallIcon());
-        intent.putExtra("status_bar_notification", sbn);
+//        intent.putExtra("status_bar_notification", sbn);
         sendBroadcast(intent);
     }
 
