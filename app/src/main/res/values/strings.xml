@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Android Notification Listener</string>
+    <string name="title_activity_application_color">ApplicationColorActivity</string>
 </resources>

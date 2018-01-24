@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -27,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Button connectButton;
 
+    private Button configButton;
+
     private NotificationReceiver notificationReceiver;
 
     private BluetoothConnection btConnection;
@@ -38,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
 
         txtView = (TextView) findViewById(R.id.textView);
         connectButton = (Button) findViewById(R.id.connectButton);
+        configButton = (Button) findViewById(R.id.configButton);
         notificationReceiver = new NotificationReceiver();
 
         IntentFilter filter = new IntentFilter();
@@ -62,7 +67,24 @@ public class MainActivity extends AppCompatActivity {
 //        stopService(new Intent(this, ArduinoListenerService.class));
     }
 
+    public void configClicked(View view) {
+        Log.i(TAG, "**********configClicked**********");
+        Intent intent = new Intent(this, ApplicationColorActivity.class);
+        startActivity(intent);
+    }
+
     class NotificationReceiver extends BroadcastReceiver {
+
+        private String getAppName(String packageName) {
+            final PackageManager pm = getApplicationContext().getPackageManager();
+            ApplicationInfo ai;
+            try {
+                ai = pm.getApplicationInfo(packageName, 0);
+            } catch (final PackageManager.NameNotFoundException e) {
+                ai = null;
+            }
+            return (String) (ai != null ? pm.getApplicationLabel(ai) : packageName);
+        }
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -92,8 +114,13 @@ public class MainActivity extends AppCompatActivity {
                     + intent.getStringExtra("notification_text"));
 
             if (btConnection != null) {
-                Log.i(TAG, "Sent '1' via bluetooth.");
-                btConnection.send("1");
+                Log.i(TAG, "Sent 'Notification' via bluetooth.");
+//                btConnection.send("1");
+//                btConnection.send("name;");
+//                btConnection.send(getAppName(intent.getStringExtra("package_name")));
+                String color = "0;188;212;";
+                String msg = "col;" + color;// + "text;" + intent.getStringExtra("notification_text") + "|";
+                btConnection.send(msg);
             } else {
                 Toast.makeText(getApplicationContext(), "Connect to HC-05 first.",
                         Toast.LENGTH_LONG);
@@ -113,8 +140,8 @@ public class MainActivity extends AppCompatActivity {
                     + intent.getStringExtra("notification_text"));
 
             if (btConnection != null) {
-                Log.i(TAG, "Sent '0' via bluetooth.");
-                btConnection.send("0");
+                Log.i(TAG, "Sent 'Removal' via bluetooth.");
+                btConnection.send("remove;");
             } else {
                 Toast.makeText(getApplicationContext(), "Connect to HC-05 first.",
                         Toast.LENGTH_LONG);
