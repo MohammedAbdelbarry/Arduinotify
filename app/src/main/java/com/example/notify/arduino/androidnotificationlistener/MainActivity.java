@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -15,6 +16,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.notify.arduino.bluetoothcontrol.BluetoothConnection;
+
+import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,7 +36,11 @@ public class MainActivity extends AppCompatActivity {
 
     private NotificationReceiver notificationReceiver;
 
+    private ColorReceiver colorReceiver;
+
     private BluetoothConnection btConnection;
+
+    private HashMap<String, Integer> appColors;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,11 +51,19 @@ public class MainActivity extends AppCompatActivity {
         connectButton = (Button) findViewById(R.id.connectButton);
         configButton = (Button) findViewById(R.id.configButton);
         notificationReceiver = new NotificationReceiver();
+        colorReceiver = new ColorReceiver();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(ArduinoListenerService.NOTIFICATION_POSTED_ACTION);
         filter.addAction(ArduinoListenerService.NOTIFICATION_REMOVED_ACTION);
         registerReceiver(notificationReceiver, filter);
+
+        IntentFilter appFilter = new IntentFilter();
+        appFilter.addAction(AllAppsActivity.APP_SELECTED_ACTION);
+        registerReceiver(colorReceiver, appFilter);
+
+        // TODO: Read Hashmap from persistent storage.
+        appColors = new HashMap<>();
 
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,6 +86,21 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "**********configClicked**********");
         Intent intent = new Intent(this, ApplicationColorActivity.class);
         startActivity(intent);
+    }
+
+    class ColorReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, "**********ColorReceiver**********");
+            Log.i(TAG, "**********onReceive**********");
+            String packageName = intent.getStringExtra("package_name");
+            int color = intent.getIntExtra("color", -1);
+            if (color == -1 || packageName == null)
+                return;
+            Log.i(TAG, "package: " + packageName + "\tColor: " + Integer.toHexString(color));
+            appColors.put(packageName, color);
+        }
     }
 
     class NotificationReceiver extends BroadcastReceiver {
@@ -108,17 +138,26 @@ public class MainActivity extends AppCompatActivity {
             // TODO: use the sbn to get the icon
 
 //            StatusBarNotification sbn = intent.getParcelableExtra("status_bar_notification");
+            String packageName = intent.getStringExtra("package_name");
 
             txtView.setText(txtView.getText() + "\n" + "Posted: "
-                    + intent.getStringExtra("package_name") + ": "
+                    + packageName + ": "
                     + intent.getStringExtra("notification_text"));
+
+
+            int color;
+            if (appColors.containsKey(packageName)) {
+                color = appColors.get(packageName);
+                Log.i(TAG, "Found Package: " + packageName + "\tColor: " + Integer.toHexString(color));
+            } else {
+                return;
+            }
 
             if (btConnection != null) {
                 Log.i(TAG, "Sent 'Notification' via bluetooth.");
-//                btConnection.send("1");
-//                btConnection.send("name;");
-//                btConnection.send(getAppName(intent.getStringExtra("package_name")));
-                String color = "0;188;212;";
+
+                String colorString = "" + Color.red(color) + ";" + Color.green(color)
+                        + ";" + Color.blue(color) + ";";
                 String msg = "col;" + color;// + "text;" + intent.getStringExtra("notification_text") + "|";
                 btConnection.send(msg);
             } else {

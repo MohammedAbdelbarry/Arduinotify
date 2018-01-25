@@ -1,20 +1,20 @@
 package com.example.notify.arduino.androidnotificationlistener;
 
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 
 import java.util.ArrayList;
 import java.util.List;
-import android.app.AlertDialog;
+
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.content.ActivityNotFoundException;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.ColorInt;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -23,16 +23,27 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.jaredrummler.android.colorpicker.ColorPickerDialog;
+import com.jaredrummler.android.colorpicker.ColorPickerDialogListener;
 
-public class AllAppsActivity extends ListActivity {
+public class AllAppsActivity extends ListActivity implements ColorPickerDialogListener {
+
+    private String TAG = this.getClass().getSimpleName();
+
     private PackageManager packageManager = null;
     private List<ApplicationInfo> applist = null;
     private ApplicationAdapter listAdapter = null;
+    protected static final String APP_SELECTED_ACTION = "com.example.notify.arduino" +
+            ".androidnotificationlistener.APP_SELECTED_ACTION";
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_all_apps);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(APP_SELECTED_ACTION);
 
         packageManager = getPackageManager();
 
@@ -76,7 +87,7 @@ public class AllAppsActivity extends ListActivity {
                     .getLaunchIntentForPackage(app.packageName);
             intent.putExtra("app", app);
 
-            ColorPickerDialog.newBuilder().setColor(Color.GREEN).show(this);
+            ColorPickerDialog.newBuilder().setColor(Color.BLUE).setDialogId(position).show(this);
 
 //            if (intent != null) {
 //                startActivity(intent);
@@ -89,7 +100,7 @@ public class AllAppsActivity extends ListActivity {
     }
 
     private List<ApplicationInfo> checkForLaunchIntent(List<ApplicationInfo> list) {
-        ArrayList<ApplicationInfo> applist = new ArrayList<ApplicationInfo>();
+        ArrayList<ApplicationInfo> applist = new ArrayList<>();
         for (ApplicationInfo info : list) {
             try {
                 if (packageManager.getLaunchIntentForPackage(info.packageName) != null) {
@@ -103,6 +114,30 @@ public class AllAppsActivity extends ListActivity {
         return applist;
     }
 
+    @Override
+    public void onColorSelected(int dialogId, @ColorInt int color) {
+        Log.i(TAG,"**********onColorSelected**********");
+        ApplicationInfo applicationInfo = applist.get(dialogId);
+        Log.i(TAG, "Selected App: " + applicationInfo.packageName);
+
+        int red = Color.red(color);
+        int green = Color.green(color);
+        int blue = Color.blue(color);
+
+        Log.i(TAG, "Color(Hex): " + Integer.toHexString(color));
+        Log.i(TAG, "R: " + red + "\tG: " + green + "\tB: " + blue);
+
+        Intent intent = new Intent(APP_SELECTED_ACTION);
+        intent.putExtra("package_name", applicationInfo.packageName);
+        intent.putExtra("color", color);
+        sendBroadcast(intent);
+    }
+
+    @Override
+    public void onDialogDismissed(int dialogId) {
+        return;
+    }
+
     private class LoadApplications extends AsyncTask<Void, Void, Void> {
         private ProgressDialog progress = null;
 
@@ -110,7 +145,7 @@ public class AllAppsActivity extends ListActivity {
         protected Void doInBackground(Void... params) {
             applist = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
             listAdapter = new ApplicationAdapter(AllAppsActivity.this,
-                    R.layout.app_list_row, applist);
+                    R.layout.app_select_list_row, applist);
 
             return null;
         }

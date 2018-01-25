@@ -1,4 +1,13 @@
 <resources>
     <string name="app_name">Android Notification Listener</string>
     <string name="title_activity_application_color">ApplicationColorActivity</string>
+    <string name="notification_posted_action">
+        com.example.notify.arduino.androidnotificationlistener.NOTIFICATION_LISTENER_POSTED_ACTION
+    </string>
+    <string name="notification_removed_action">
+        com.example.notify.arduino.androidnotificationlistener.NOTIFICATION_LISTENER_REMOVED_ACTION
+    </string>
+    <string name="application_selected_action">
+        com.example.notify.arduino.allappsactivity.APPLICATION_SELECTED_ACTION
+    </string>
 </resources>

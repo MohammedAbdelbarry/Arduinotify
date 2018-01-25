@@ -85,7 +85,7 @@ public class ArduinoListenerService extends NotificationListenerService {
         Log.i(TAG,"ID :" + sbn.getId() + "\t" + getTickerText(sbn.getNotification())
                 + "\t" + sbn.getPackageName());
 
-        Intent intent = new  Intent(NOTIFICATION_POSTED_ACTION);
+        Intent intent = new Intent(NOTIFICATION_POSTED_ACTION);
         intent.putExtra("package_name", sbn.getPackageName());
         intent.putExtra("notification_text", getTickerText(sbn.getNotification()));
         //intent.putExtra("notification_icon", sbn.getNotification().getSmallIcon());
@@ -99,7 +99,7 @@ public class ArduinoListenerService extends NotificationListenerService {
         Log.i(TAG,"ID :" + sbn.getId() + "\t" + getTickerText(sbn.getNotification())
                 +"\t" + sbn.getPackageName());
 
-        Intent intent = new  Intent(NOTIFICATION_REMOVED_ACTION);
+        Intent intent = new Intent(NOTIFICATION_REMOVED_ACTION);
         intent.putExtra("package_name", sbn.getPackageName());
         intent.putExtra("notification_text", getTickerText(sbn.getNotification()));
         //intent.putExtra("notification_icon", sbn.getNotification().getSmallIcon());
