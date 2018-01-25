@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(notificationReceiver, filter);
 
         IntentFilter appFilter = new IntentFilter();
-        appFilter.addAction(AllAppsActivity.APP_SELECTED_ACTION);
+        appFilter.addAction(ApplicationColorActivity.APP_SELECTED_ACTION);
         registerReceiver(colorReceiver, appFilter);
 
         // TODO: Read Hashmap from persistent storage.

@@ -1,6 +1,5 @@
 package com.example.notify.arduino.androidnotificationlistener;
 
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -15,9 +14,6 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.support.annotation.ColorInt;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -32,10 +28,6 @@ public class AllAppsActivity extends ListActivity implements ColorPickerDialogLi
     private PackageManager packageManager = null;
     private List<ApplicationInfo> applist = null;
     private ApplicationAdapter listAdapter = null;
-    protected static final String APP_SELECTED_ACTION = "com.example.notify.arduino" +
-            ".androidnotificationlistener.APP_SELECTED_ACTION";
-
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,46 +39,21 @@ public class AllAppsActivity extends ListActivity implements ColorPickerDialogLi
         new LoadApplications().execute();
     }
 
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-//        inflater.inflate(R.menu.menu, menu);
-
-        return true;
-    }
-
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
-
-        ApplicationInfo app = applist.get(position);
-
         try {
-            Intent intent = packageManager
-                    .getLaunchIntentForPackage(app.packageName);
-            intent.putExtra("app", app);
-
             ColorPickerDialog.newBuilder().setColor(Color.BLUE).setDialogId(position).show(this);
-
-//            if (intent != null) {
-//                startActivity(intent);
-//            }
-            //Intent intent = new Intent(this, )
         } catch (Exception e) {
             Toast.makeText(AllAppsActivity.this, e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
     }
 
-    private List<ApplicationInfo> checkForLaunchIntent(List<ApplicationInfo> list) {
+    private List<ApplicationInfo> addAppInfo(List<ApplicationInfo> list) {
         ArrayList<ApplicationInfo> applist = new ArrayList<>();
         for (ApplicationInfo info : list) {
-            try {
-                if (packageManager.getLaunchIntentForPackage(info.packageName) != null) {
-                    applist.add(info);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            applist.add(info);
         }
 
         return applist;
@@ -105,12 +72,7 @@ public class AllAppsActivity extends ListActivity implements ColorPickerDialogLi
         Log.i(TAG, "Color(Hex): " + Integer.toHexString(color));
         Log.i(TAG, "R: " + red + "\tG: " + green + "\tB: " + blue);
 
-        Intent intent = new Intent(APP_SELECTED_ACTION);
-        intent.putExtra("package_name", applicationInfo.packageName);
-        intent.putExtra("color", color);
-        sendBroadcast(intent);
-
-        Intent resultIntent = new Intent(APP_SELECTED_ACTION);
+        Intent resultIntent = new Intent();
         resultIntent.putExtra("app_info", applicationInfo);
         resultIntent.putExtra("color", color);
         setResult(RESULT_OK, resultIntent);
@@ -127,7 +89,7 @@ public class AllAppsActivity extends ListActivity implements ColorPickerDialogLi
 
         @Override
         protected Void doInBackground(Void... params) {
-            applist = checkForLaunchIntent(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
+            applist = addAppInfo(packageManager.getInstalledApplications(PackageManager.GET_META_DATA));
             listAdapter = new ApplicationAdapter(AllAppsActivity.this,
                     R.layout.app_select_list_row, applist);
 

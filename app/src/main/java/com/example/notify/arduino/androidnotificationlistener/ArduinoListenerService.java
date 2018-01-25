@@ -33,9 +33,6 @@ public class ArduinoListenerService extends NotificationListenerService {
     @Override
     public void onCreate() {
         super.onCreate();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(NOTIFICATION_POSTED_ACTION);
-        filter.addAction(NOTIFICATION_REMOVED_ACTION);
     }
 
     @Override

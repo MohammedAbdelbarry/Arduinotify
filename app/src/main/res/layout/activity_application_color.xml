@@ -20,6 +20,14 @@
 
     </android.support.design.widget.AppBarLayout>
 
+
+    <ListView
+        android:id="@+id/configList"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="?attr/actionBarSize"/>
+
+
     <include layout="@layout/content_application_color" />
 
     <android.support.design.widget.FloatingActionButton
