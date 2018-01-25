@@ -42,9 +42,6 @@ public class AllAppsActivity extends ListActivity implements ColorPickerDialogLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_all_apps);
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(APP_SELECTED_ACTION);
-
         packageManager = getPackageManager();
 
         new LoadApplications().execute();
@@ -55,25 +52,6 @@ public class AllAppsActivity extends ListActivity implements ColorPickerDialogLi
 //        inflater.inflate(R.menu.menu, menu);
 
         return true;
-    }
-
-    public boolean onOptionsItemSelected(MenuItem item) {
-        boolean result = true;
-
-//        switch (item.getItemId()) {
-//            case R.id.menu_about: {
-//                displayAboutDialog();
-//
-//                break;
-//            }
-//            default: {
-//                result = super.onOptionsItemSelected(item);
-//
-//                break;
-//            }
-//        }
-
-        return result;
     }
 
     @Override
@@ -131,6 +109,12 @@ public class AllAppsActivity extends ListActivity implements ColorPickerDialogLi
         intent.putExtra("package_name", applicationInfo.packageName);
         intent.putExtra("color", color);
         sendBroadcast(intent);
+
+        Intent resultIntent = new Intent(APP_SELECTED_ACTION);
+        resultIntent.putExtra("app_info", applicationInfo);
+        resultIntent.putExtra("color", color);
+        setResult(RESULT_OK, resultIntent);
+        finish();
     }
 
     @Override
