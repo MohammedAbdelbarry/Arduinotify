@@ -19,6 +19,7 @@ import com.jaredrummler.android.colorpicker.ColorPickerDialog;
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -39,7 +40,24 @@ public class ApplicationColorActivity extends AppCompatActivity implements Color
         setSupportActionBar(toolbar);
         listView = (ListView) findViewById(R.id.configList);
 
+        HashMap<String, Integer> appColors
+                = (HashMap<String, Integer>) getIntent().getSerializableExtra("selected_apps");
+
         applist = new ArrayList<>();
+
+        if (appColors != null) {
+            PackageManager pm = getPackageManager();
+            if (pm != null) {
+                for (String packageName : appColors.keySet()) {
+                    try {
+                        applist.add(pm.getApplicationInfo(packageName, 0));
+                    } catch (PackageManager.NameNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
         listAdapter = new ApplicationAdapter(this,
                 R.layout.app_select_list_row, applist);
         listView.setAdapter(listAdapter);

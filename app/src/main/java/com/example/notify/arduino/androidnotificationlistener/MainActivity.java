@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -19,10 +20,14 @@ import com.example.notify.arduino.bluetoothcontrol.BluetoothConnection;
 
 import java.util.HashMap;
 
+import static java.security.AccessController.getContext;
+
 public class MainActivity extends AppCompatActivity {
 
     /* HC-05 Bluetooth module MAC address. */
     protected static final String HC05_MAC_ADDRESS = "98:D3:32:10:E9:4D";
+
+    private static final String APP_COLORS_PREF = "AppColors";
 
     private String TAG = this.getClass().getSimpleName();
     /**
@@ -62,29 +67,56 @@ public class MainActivity extends AppCompatActivity {
         appFilter.addAction(ApplicationColorActivity.APP_SELECTED_ACTION);
         registerReceiver(colorReceiver, appFilter);
 
-        // TODO: Read Hashmap from persistent storage.
+        SharedPreferences prefs = getSharedPreferences(APP_COLORS_PREF, Context.MODE_PRIVATE);
         appColors = new HashMap<>();
-
+        HashMap<String, Integer> prefsMap = (HashMap<String, Integer>) prefs.getAll();
+        for (String packageName : prefsMap.keySet()) {
+            appColors.put(packageName, prefsMap.get(packageName));
+        }
+        Log.i(TAG, "Number of items in appColors: " + appColors.size());
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                btConnection = new BluetoothConnection(HC05_MAC_ADDRESS);
-                btConnection.execute();
+                try {
+                    btConnection = new BluetoothConnection(HC05_MAC_ADDRESS);
+                    btConnection.execute();
+                } catch (Exception e) {
+                    Toast.makeText(getApplicationContext(), "Failed to Connect to HC-05", Toast.LENGTH_LONG);
+                    e.printStackTrace();
+                }
             }
         });
     }
 
+    private void saveMap(HashMap<String, Integer> map, String sharedPrefName) {
+        Log.i(TAG, "**********saveMap**********");
+        Log.i(TAG, "Number of items in map: " + map.size());
+        SharedPreferences prefs = getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        for (String packageName : map.keySet()) {
+            editor.putInt(packageName, map.get(packageName));
+        }
+        editor.commit();
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(notificationReceiver);
-//        stopService(new Intent(this, ArduinoListenerService.class));
+        unregisterReceiver(colorReceiver);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveMap(appColors, APP_COLORS_PREF);
+        stopService(new Intent(this, ArduinoListenerService.class));
     }
 
     public void configClicked(View view) {
         Log.i(TAG, "**********configClicked**********");
         Intent intent = new Intent(this, ApplicationColorActivity.class);
+        intent.putExtra("selected_apps", appColors);
         startActivity(intent);
     }
 
