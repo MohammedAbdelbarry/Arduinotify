@@ -167,9 +167,6 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, "Posted: " + intent.getStringExtra("package_name")
                     + ": " + intent.getStringExtra("notification_text"));
 
-            // TODO: use the sbn to get the icon
-
-//            StatusBarNotification sbn = intent.getParcelableExtra("status_bar_notification");
             String packageName = intent.getStringExtra("package_name");
 
             txtView.setText(txtView.getText() + "\n" + "Posted: "
@@ -189,8 +186,8 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "Sent 'Notification' via bluetooth.");
 
                 String colorString = "" + Color.red(color) + ";" + Color.green(color)
-                        + ";" + Color.blue(color) + ";";
-                String msg = "col;" + color;// + "text;" + intent.getStringExtra("notification_text") + "|";
+                        + ";" + Color.blue(color);
+                String msg = "post;" + packageName + ";" + color;
                 btConnection.send(msg);
             } else {
                 Toast.makeText(getApplicationContext(), "Connect to HC-05 first.",
@@ -203,16 +200,15 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, "Removed: " + intent.getStringExtra("package_name") + ": "
                     + intent.getStringExtra("notification_text"));
 
-            // TODO: use the sbn to get the icon
-//            StatusBarNotification sbn = intent.getParcelableExtra("status_bar_notification");
+            String packageName = intent.getStringExtra("package_name");
 
             txtView.setText(txtView.getText() + "\n" + "Removed: "
-                    + intent.getStringExtra("package_name") + ": "
+                    + packageName + ": "
                     + intent.getStringExtra("notification_text"));
 
             if (btConnection != null) {
                 Log.i(TAG, "Sent 'Removal' via bluetooth.");
-                btConnection.send("remove;");
+                btConnection.send("rem;" + packageName);
             } else {
                 Toast.makeText(getApplicationContext(), "Connect to HC-05 first.",
                         Toast.LENGTH_LONG);
