@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
 
                 String colorString = "" + Color.red(color) + ";" + Color.green(color)
                         + ";" + Color.blue(color);
-                String msg = "post;" + packageName + ";" + color;
+                String msg = "post;" + packageName + ";" + colorString;
                 btConnection.send(msg);
             } else {
                 Toast.makeText(getApplicationContext(), "Connect to HC-05 first.",
