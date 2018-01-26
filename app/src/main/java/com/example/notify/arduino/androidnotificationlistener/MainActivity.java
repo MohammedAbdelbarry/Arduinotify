@@ -9,20 +9,28 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.ColorInt;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.notify.arduino.bluetoothcontrol.BluetoothConnection;
+import com.example.notify.arduino.listadapters.AppConfigAdapter;
+import com.example.notify.arduino.listadapters.ApplicationAdapter;
+import com.jaredrummler.android.colorpicker.ColorPickerDialog;
+import com.jaredrummler.android.colorpicker.ColorPickerDialogListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
-import static java.security.AccessController.getContext;
-
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ColorPickerDialogListener {
 
     /* HC-05 Bluetooth module MAC address. */
     protected static final String HC05_MAC_ADDRESS = "98:D3:32:10:E9:4D";
@@ -35,37 +43,44 @@ public class MainActivity extends AppCompatActivity {
      */
     private TextView txtView;
 
-    private Button connectButton;
-
-    private Button configButton;
-
     private NotificationReceiver notificationReceiver;
 
-    private ColorReceiver colorReceiver;
+//    private ColorReceiver colorReceiver;
 
     private BluetoothConnection btConnection;
 
     private HashMap<String, Integer> appColors;
+
+
+    private static final int COLOR_REQUEST_CODE = 1;
+
+    private List<AppConfig> applist = null;
+
+    private AppConfigAdapter listAdapter = null;
+
+    private ListView listView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        listView = (ListView) findViewById(R.id.configList);
+
+
         txtView = (TextView) findViewById(R.id.textView);
-        connectButton = (Button) findViewById(R.id.connectButton);
-        configButton = (Button) findViewById(R.id.configButton);
         notificationReceiver = new NotificationReceiver();
-        colorReceiver = new ColorReceiver();
+//        colorReceiver = new ColorReceiver();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(ArduinoListenerService.NOTIFICATION_POSTED_ACTION);
         filter.addAction(ArduinoListenerService.NOTIFICATION_REMOVED_ACTION);
         registerReceiver(notificationReceiver, filter);
 
-        IntentFilter appFilter = new IntentFilter();
-        appFilter.addAction(ApplicationColorActivity.APP_SELECTED_ACTION);
-        registerReceiver(colorReceiver, appFilter);
+//        IntentFilter appFilter = new IntentFilter();
+//        appFilter.addAction(ApplicationColorActivity.APP_SELECTED_ACTION);
+//        registerReceiver(colorReceiver, appFilter);
 
         SharedPreferences prefs = getSharedPreferences(APP_COLORS_PREF, Context.MODE_PRIVATE);
         appColors = new HashMap<>();
@@ -73,19 +88,43 @@ public class MainActivity extends AppCompatActivity {
         for (String packageName : prefsMap.keySet()) {
             appColors.put(packageName, prefsMap.get(packageName));
         }
-        Log.i(TAG, "Number of items in appColors: " + appColors.size());
-        connectButton.setOnClickListener(new View.OnClickListener() {
+
+
+        applist = new ArrayList<>();
+
+        if (appColors != null) {
+            PackageManager pm = getPackageManager();
+            if (pm != null) {
+                for (String packageName : appColors.keySet()) {
+                    try {
+                        ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
+                        int color = appColors.get(packageName);
+                        applist.add(new AppConfig(info, color));
+                    } catch (PackageManager.NameNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        listAdapter = new AppConfigAdapter(this,
+                R.layout.app_select_list_row, applist);
+        listView.setAdapter(listAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 try {
-                    btConnection = new BluetoothConnection(HC05_MAC_ADDRESS);
-                    btConnection.execute();
+                    ColorPickerDialog.newBuilder().setColor(Color.BLUE)
+                            .setDialogId(position).show(MainActivity.this);
                 } catch (Exception e) {
-                    Toast.makeText(getApplicationContext(), "Failed to Connect to HC-05", Toast.LENGTH_LONG);
-                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, e.getMessage(),
+                            Toast.LENGTH_LONG).show();
                 }
             }
         });
+
+
+        Log.i(TAG, "Number of items in appColors: " + appColors.size());
     }
 
     private void saveMap(HashMap<String, Integer> map, String sharedPrefName) {
@@ -99,11 +138,62 @@ public class MainActivity extends AppCompatActivity {
         editor.commit();
     }
 
+    public void fabClicked(View view) {
+        Log.i(TAG, "**********fabClicked**********");
+        Intent intent = new Intent(this, AllAppsActivity.class);
+        startActivityForResult(intent, COLOR_REQUEST_CODE);
+    }
+
+    private void insert(List<AppConfig> list, @NonNull ApplicationInfo info, @ColorInt int color) {
+        if (info == null)
+            return;
+        int i = 0;
+        for (AppConfig config : list) {
+            if (config.applicationInfo != null &&
+                    config.applicationInfo.packageName.equals(info.packageName)) {
+                listAdapter.remove(config);
+                listAdapter.insert(new AppConfig(info, color), i);
+                return;
+            }
+            i++;
+        }
+        listAdapter.add(new AppConfig(info, color));
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == COLOR_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                ApplicationInfo info = data.getParcelableExtra("app_info");
+                int color = data.getIntExtra("color", -1);
+                if (info == null || color == -1)
+                    return;
+                appColors.put(info.packageName, color);
+                insert(applist, info, color);
+            }
+        }
+    }
+
+    @Override
+    public void onColorSelected(int dialogId, @ColorInt int color) {
+        AppConfig config = applist.get(dialogId);
+        ApplicationInfo info = config.applicationInfo;
+        listAdapter.remove(config);
+        listAdapter.insert(new AppConfig(info, color), dialogId);
+        appColors.put(config.applicationInfo.packageName, color);
+    }
+
+    @Override
+    public void onDialogDismissed(int dialogId) {
+
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(notificationReceiver);
-        unregisterReceiver(colorReceiver);
+//        unregisterReceiver(colorReceiver);
     }
 
     @Override
@@ -113,27 +203,37 @@ public class MainActivity extends AppCompatActivity {
         stopService(new Intent(this, ArduinoListenerService.class));
     }
 
-    public void configClicked(View view) {
+    public void configClicked(MenuItem item) {
         Log.i(TAG, "**********configClicked**********");
-        Intent intent = new Intent(this, ApplicationColorActivity.class);
-        intent.putExtra("selected_apps", appColors);
-        startActivity(intent);
+//        Intent intent = new Intent(this, ApplicationColorActivity.class);
+//        intent.putExtra("selected_apps", appColors);
+//        startActivity(intent);
     }
 
-    class ColorReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.i(TAG, "**********ColorReceiver**********");
-            Log.i(TAG, "**********onReceive**********");
-            String packageName = intent.getStringExtra("package_name");
-            int color = intent.getIntExtra("color", -1);
-            if (color == -1 || packageName == null)
-                return;
-            Log.i(TAG, "package: " + packageName + "\tColor: " + Integer.toHexString(color));
-            appColors.put(packageName, color);
+    public void connectClicked(MenuItem item) {
+        try {
+            btConnection = new BluetoothConnection(HC05_MAC_ADDRESS);
+            btConnection.execute();
+        } catch (Exception e) {
+            Toast.makeText(getApplicationContext(), "Failed to Connect to HC-05", Toast.LENGTH_LONG);
+            e.printStackTrace();
         }
     }
+
+//    class ColorReceiver extends BroadcastReceiver {
+//
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            Log.i(TAG, "**********ColorReceiver**********");
+//            Log.i(TAG, "**********onReceive**********");
+//            String packageName = intent.getStringExtra("package_name");
+//            int color = intent.getIntExtra("color", -1);
+//            if (color == -1 || packageName == null)
+//                return;
+//            Log.i(TAG, "package: " + packageName + "\tColor: " + Integer.toHexString(color));
+//            appColors.put(packageName, color);
+//        }
+//    }
 
     class NotificationReceiver extends BroadcastReceiver {
 

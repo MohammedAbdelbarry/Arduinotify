@@ -30,15 +30,6 @@
             </intent-filter>
         </service>
 
-        <activity
-            android:name=".ApplicationColorActivity"
-            android:label="@string/title_activity_application_color"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.notify.arduino.androidnotificationlistener.MainActivity" />
-        </activity>
         <activity android:name=".AllAppsActivity"></activity>
     </application>
 

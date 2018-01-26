@@ -1,6 +1,11 @@
 <resources>
-    <string name="app_name">Android Notification Listener</string>
-    <string name="title_activity_application_color">ApplicationColorActivity</string>
+    <string name="app_name">Arduinotify</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_application_color">Selected Applications</string>
     <string name="notification_posted_action">
         com.example.notify.arduino.androidnotificationlistener.NOTIFICATION_LISTENER_POSTED_ACTION
     </string>

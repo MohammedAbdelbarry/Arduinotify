@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.example.notify.arduino.listadapters.ApplicationAdapter;
 import com.jaredrummler.android.colorpicker.ColorPickerDialog;
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener;
 

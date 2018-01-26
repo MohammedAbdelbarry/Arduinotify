@@ -1,24 +1,35 @@
-package com.example.notify.arduino.androidnotificationlistener;
-
-import java.util.List;
+package com.example.notify.arduino.listadapters;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.TextView;
 
-public class ApplicationAdapter extends ArrayAdapter<ApplicationInfo> {
-    private List<ApplicationInfo> appsList = null;
+import com.example.notify.arduino.androidnotificationlistener.AppConfig;
+import com.example.notify.arduino.androidnotificationlistener.R;
+
+import java.lang.reflect.Array;
+import java.util.List;
+
+/**
+ * Created by mohammed on 1/26/18.
+ */
+
+public class AppConfigAdapter extends ArrayAdapter<AppConfig> {
+    private List<AppConfig> appsList = null;
     private Context context;
     private PackageManager packageManager;
 
-    public ApplicationAdapter(Context context, int textViewResourceId,
-                              List<ApplicationInfo> appsList) {
+    public AppConfigAdapter(Context context, int textViewResourceId,
+                              List<AppConfig> appsList) {
         super(context, textViewResourceId, appsList);
         this.context = context;
         this.appsList = appsList;
@@ -31,7 +42,7 @@ public class ApplicationAdapter extends ArrayAdapter<ApplicationInfo> {
     }
 
     @Override
-    public ApplicationInfo getItem(int position) {
+    public AppConfig getItem(int position) {
         return ((appsList != null) ? appsList.get(position) : null);
     }
 
@@ -49,14 +60,20 @@ public class ApplicationAdapter extends ArrayAdapter<ApplicationInfo> {
             view = layoutInflater.inflate(R.layout.app_select_list_row, null);
         }
 
-        ApplicationInfo applicationInfo = appsList.get(position);
+        ApplicationInfo applicationInfo = appsList.get(position).applicationInfo;
+        int color = appsList.get(position).color;
         if (null != applicationInfo) {
             TextView appName = (TextView) view.findViewById(R.id.app_name);
             ImageView iconview = (ImageView) view.findViewById(R.id.app_icon);
-
+            TextView packageName = (TextView) view.findViewById(R.id.package_name);
             appName.setText(applicationInfo.loadLabel(packageManager));
             iconview.setImageDrawable(applicationInfo.loadIcon(packageManager));
+            packageName.setText(applicationInfo.packageName);
+            int len = 100;
+            int[] grad = new int [len];
+            grad[len - 2] = grad[len - 1] = color;
+            view.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, grad));
         }
         return view;
     }
-};
+}
