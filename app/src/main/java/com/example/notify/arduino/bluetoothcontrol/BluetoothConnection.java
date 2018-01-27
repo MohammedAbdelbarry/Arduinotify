@@ -3,6 +3,8 @@ package com.example.notify.arduino.bluetoothcontrol;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -14,6 +16,8 @@ import java.util.UUID;
  */
 
 public class BluetoothConnection extends AsyncTask<Void, Void, Void> {
+
+    private Context context;
     private BluetoothAdapter btAdapter = null;
     private BluetoothSocket btSocket = null;
     private boolean isBtConnected = false;
@@ -21,9 +25,14 @@ public class BluetoothConnection extends AsyncTask<Void, Void, Void> {
     private String address = null;
     private String TAG = this.getClass().getSimpleName();
     private static final UUID statUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    public static final String BLUETOOTH_CONNECTED_ACTION
+            = "com.example.notify.arduino.bluetoothcontrol" +
+            ".BLUETOOTH_CONNECTED_ACTION";
 
-    public BluetoothConnection(final String address) {
+
+    public BluetoothConnection(Context context, final String address) {
         this.address = address;
+        this.context = context;
     }
 
     @Override
@@ -62,11 +71,13 @@ public class BluetoothConnection extends AsyncTask<Void, Void, Void> {
 
         if (!connectSuccess) {
             Log.e(TAG, "Connection Failed");
-            throw new RuntimeException("Connection Failed");
         } else {
             Log.i(TAG, "Connection Successful");
             isBtConnected = true;
         }
+        Intent intent = new Intent(BLUETOOTH_CONNECTED_ACTION);
+        intent.putExtra("success", connectSuccess);
+        context.sendBroadcast(intent);
     }
 
     public void send(String s) {

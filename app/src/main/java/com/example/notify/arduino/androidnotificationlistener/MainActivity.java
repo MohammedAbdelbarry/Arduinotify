@@ -31,8 +31,19 @@ import com.example.notify.arduino.listadapters.AppConfigAdapter;
 import com.example.notify.arduino.listadapters.ApplicationAdapter;
 import com.jaredrummler.android.colorpicker.ColorPickerDialog;
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener;
+import com.survivingwithandroid.weather.lib.WeatherClient;
+import com.survivingwithandroid.weather.lib.WeatherConfig;
+import com.survivingwithandroid.weather.lib.client.okhttp.WeatherDefaultClient;
+import com.survivingwithandroid.weather.lib.exception.WeatherLibException;
+import com.survivingwithandroid.weather.lib.model.CurrentWeather;
+import com.survivingwithandroid.weather.lib.provider.forecastio.ForecastIOProviderType;
+import com.survivingwithandroid.weather.lib.provider.openweathermap.OpenweathermapProviderType;
+import com.survivingwithandroid.weather.lib.request.WeatherRequest;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -48,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
 
     private NotificationReceiver notificationReceiver;
 
-//    private ColorReceiver colorReceiver;
+    private BluetoothConnectionReceiver bluetoothConnectionReceiver;
 
     private BluetoothConnection btConnection;
 
@@ -83,16 +94,17 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
         listView = (ListView) findViewById(R.id.configList);
 
         notificationReceiver = new NotificationReceiver();
-//        colorReceiver = new ColorReceiver();
+        bluetoothConnectionReceiver = new BluetoothConnectionReceiver();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(ArduinoListenerService.NOTIFICATION_POSTED_ACTION);
         filter.addAction(ArduinoListenerService.NOTIFICATION_REMOVED_ACTION);
         registerReceiver(notificationReceiver, filter);
 
-//        IntentFilter appFilter = new IntentFilter();
-//        appFilter.addAction(ApplicationColorActivity.APP_SELECTED_ACTION);
-//        registerReceiver(colorReceiver, appFilter);
+        IntentFilter bluetoothConnectionFilter = new IntentFilter();
+        bluetoothConnectionFilter.addAction(BluetoothConnection.BLUETOOTH_CONNECTED_ACTION);
+        registerReceiver(bluetoothConnectionReceiver, bluetoothConnectionFilter);
+
 
         SharedPreferences prefs = getSharedPreferences(APP_COLORS_PREF, Context.MODE_PRIVATE);
         appColors = new HashMap<>();
@@ -236,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(notificationReceiver);
-//        unregisterReceiver(colorReceiver);
+        unregisterReceiver(bluetoothConnectionReceiver);
     }
 
     @Override
@@ -255,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
 
     public void connectClicked(MenuItem item) {
         try {
-            btConnection = new BluetoothConnection(HC05_MAC_ADDRESS);
+            btConnection = new BluetoothConnection(this, HC05_MAC_ADDRESS);
             btConnection.execute();
         } catch (Exception e) {
             Toast.makeText(getApplicationContext(), "Failed to Connect to HC-05", Toast.LENGTH_LONG);
@@ -268,20 +280,65 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
         return false;
     }
 
-//    class ColorReceiver extends BroadcastReceiver {
-//
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            Log.i(TAG, "**********ColorReceiver**********");
-//            Log.i(TAG, "**********onReceive**********");
-//            String packageName = intent.getStringExtra("package_name");
-//            int color = intent.getIntExtra("color", -1);
-//            if (color == -1 || packageName == null)
-//                return;
-//            Log.i(TAG, "package: " + packageName + "\tColor: " + Integer.toHexString(color));
-//            appColors.put(packageName, color);
-//        }
-//    }
+    class BluetoothConnectionReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, "**********BluetoothConnectionReceiver**********");
+            Log.i(TAG, "**********onReceive**********");
+            boolean success = intent.getBooleanExtra("success", false);
+            if (success) {
+                Date now = new Date();
+                DateFormat timeFormat = new SimpleDateFormat("date;dd;MM;yyyy;clock;HH;mm;ss;");
+                String formattedTime = timeFormat.format(now);
+                btConnection.send(formattedTime);
+                sendTemprature();
+            } else {
+                btConnection = null;
+            }
+        }
+        private void sendTemprature() {
+            WeatherClient.ClientBuilder builder = new WeatherClient.ClientBuilder();
+            WeatherConfig config = new WeatherConfig();
+//            config.unitSystem = WeatherConfig.UNIT_SYSTEM.M;
+//            config.maxResult = 8;
+//            config.numDays = 1;
+//            config.lang = "en";
+            config.ApiKey = "4af0ec4188ddd3d667cf69bdd7dd9ecc";
+            try {
+                WeatherClient client = builder.attach(MainActivity.this)
+                        .provider(new OpenweathermapProviderType())
+                        .httpClient(WeatherDefaultClient.class)
+                        .config(config)
+                        .build();
+                client.getCurrentCondition(new WeatherRequest(31.208180f, 29.924492f), new WeatherClient.WeatherEventListener() {
+                    @Override
+                    public void onWeatherRetrieved(CurrentWeather currentWeather) {
+
+                        float currentTemp = currentWeather.weather.temperature.getTemp();
+                        Log.i(TAG, "City ["+currentWeather.weather.location.getCity()+"] Current temp ["+currentTemp+"C]");
+                        int temp = (int) (currentTemp + 0.5f);
+                        btConnection.send("temp;" + temp + ";");
+                    }
+
+                    @Override
+                    public void onWeatherError(WeatherLibException e) {
+                        Log.i(TAG, "Weather Error - parsing data");
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onConnectionError(Throwable throwable) {
+                        Log.i(TAG, "Connection error");
+                        throwable.printStackTrace();
+                    }
+                });
+            }
+            catch (Throwable t) {
+                t.printStackTrace();
+            }
+        }
+    }
 
     class NotificationReceiver extends BroadcastReceiver {
 
@@ -317,11 +374,6 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
 
             String packageName = intent.getStringExtra("package_name");
 
-//            txtView.setText(txtView.getText() + "\n" + "Posted: "
-//                    + packageName + ": "
-//                    + intent.getStringExtra("notification_text"));
-
-
             int color;
             if (appColors.containsKey(packageName)) {
                 color = appColors.get(packageName);
@@ -349,10 +401,6 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
                     + intent.getStringExtra("notification_text"));
 
             String packageName = intent.getStringExtra("package_name");
-
-//            txtView.setText(txtView.getText() + "\n" + "Removed: "
-//                    + packageName + ": "
-//                    + intent.getStringExtra("notification_text"));
 
             if (btConnection != null) {
                 Log.i(TAG, "Sent 'Removal' via bluetooth.");

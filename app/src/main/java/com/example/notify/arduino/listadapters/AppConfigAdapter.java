@@ -72,7 +72,7 @@ public class AppConfigAdapter extends ArrayAdapter<AppConfig> {
             int len = 100;
             int[] grad = new int [len];
             grad[len - 2] = grad[len - 1] = color;
-            view.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, grad));
+            view.setBackground(new GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, grad));
         }
         return view;
     }
