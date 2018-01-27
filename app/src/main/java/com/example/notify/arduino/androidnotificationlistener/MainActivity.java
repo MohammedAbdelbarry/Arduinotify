@@ -325,9 +325,11 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
             boolean success = intent.getBooleanExtra("success", false);
             if (success) {
                 Date now = new Date();
-                DateFormat timeFormat = new SimpleDateFormat("date;dd;MM;yyyy;clock;HH;mm;ss;");
-                String formattedTime = timeFormat.format(now);
-                btConnection.send(formattedTime);
+                DateFormat timeFormat = new SimpleDateFormat("HH;mm;ss;");
+                DateFormat dateFormat = new SimpleDateFormat("dd;MM;yyyy;");
+                String time = "clock;" + timeFormat.format(now);
+                String date = "date;" + dateFormat.format(now);
+                btConnection.send(date + time);
                 sendTemprature();
             } else {
                 btConnection = null;
@@ -423,7 +425,7 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
 
                 String colorString = "" + Color.red(color) + ";" + Color.green(color)
                         + ";" + Color.blue(color);
-                String msg = "post;" + packageName + ";" + colorString;
+                String msg = "post;" + getAppName(packageName) + ";" + colorString;
                 btConnection.send(msg);
             } else {
                 Toast.makeText(getApplicationContext(), "Connect to HC-05 first.",
@@ -440,7 +442,7 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
 
             if (btConnection != null) {
                 Log.i(TAG, "Sent 'Removal' via bluetooth.");
-                btConnection.send("rem;" + packageName);
+                btConnection.send("rem;" + getAppName(packageName));
             } else {
                 Toast.makeText(getApplicationContext(), "Connect to HC-05 first.",
                         Toast.LENGTH_LONG);
