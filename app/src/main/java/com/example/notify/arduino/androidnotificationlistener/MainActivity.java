@@ -2,6 +2,7 @@ package com.example.notify.arduino.androidnotificationlistener;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -15,6 +16,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -116,8 +118,8 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
 
         applist = new ArrayList<>();
 
+        final PackageManager pm = getPackageManager();
         if (appColors != null) {
-            PackageManager pm = getPackageManager();
             if (pm != null) {
                 for (String packageName : appColors.keySet()) {
                     try {
@@ -144,6 +146,39 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
                     Toast.makeText(MainActivity.this, e.getMessage(),
                             Toast.LENGTH_LONG).show();
                 }
+            }
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
+                final AppConfig config = applist.get(position);
+                final ApplicationInfo info = config.applicationInfo;
+                String appName = info.loadLabel(pm).toString();
+
+
+                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this);
+                AlertDialog dialog = dialogBuilder.setTitle("Delete \"" + appName + "\"")
+                        .setMessage("Are you sure tou want to delete \"" + appName + "\"?")
+                        .setCancelable(true)
+                        .setNegativeButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                Log.i(TAG, "Clicked Yes");
+                                Log.i(TAG, "Size Before: " + appColors.size());
+                                Log.i(TAG, "Deletion Status: " + appColors.remove(info.packageName));
+                                Log.i(TAG, "Size After: " + appColors.size());
+                                listAdapter.remove(config);
+                            }
+                        }).setPositiveButton("No", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                Log.i(TAG, "Clicked No");
+                            }
+                        }).create();
+                dialog.show();
+
+                return true;
             }
         });
 
@@ -187,6 +222,7 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
         Log.i(TAG, "Number of items in map: " + map.size());
         SharedPreferences prefs = getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
         for (String packageName : map.keySet()) {
             editor.putInt(packageName, map.get(packageName));
         }
