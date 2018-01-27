@@ -38,10 +38,6 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
     private static final String APP_COLORS_PREF = "AppColors";
 
     private String TAG = this.getClass().getSimpleName();
-    /**
-     * A TextView for testing.
-     */
-    private TextView txtView;
 
     private NotificationReceiver notificationReceiver;
 
@@ -68,8 +64,6 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
 
         listView = (ListView) findViewById(R.id.configList);
 
-
-        txtView = (TextView) findViewById(R.id.textView);
         notificationReceiver = new NotificationReceiver();
 //        colorReceiver = new ColorReceiver();
 
@@ -269,9 +263,9 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
 
             String packageName = intent.getStringExtra("package_name");
 
-            txtView.setText(txtView.getText() + "\n" + "Posted: "
-                    + packageName + ": "
-                    + intent.getStringExtra("notification_text"));
+//            txtView.setText(txtView.getText() + "\n" + "Posted: "
+//                    + packageName + ": "
+//                    + intent.getStringExtra("notification_text"));
 
 
             int color;
@@ -302,9 +296,9 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
 
             String packageName = intent.getStringExtra("package_name");
 
-            txtView.setText(txtView.getText() + "\n" + "Removed: "
-                    + packageName + ": "
-                    + intent.getStringExtra("notification_text"));
+//            txtView.setText(txtView.getText() + "\n" + "Removed: "
+//                    + packageName + ": "
+//                    + intent.getStringExtra("notification_text"));
 
             if (btConnection != null) {
                 Log.i(TAG, "Sent 'Removal' via bluetooth.");
