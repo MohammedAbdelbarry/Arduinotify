@@ -48,8 +48,17 @@ public class BluetoothConnection extends AsyncTask<Void, Void, Void> {
             if (btSocket == null || !isBtConnected) {
                 // Get the mobile bluetooth device
                 btAdapter = BluetoothAdapter.getDefaultAdapter();
+                if (btAdapter == null) {
+                    connectSuccess = false;
+                    return null;
+                }
+
                 // Connects to the device's address and checks if it's available
                 BluetoothDevice device = btAdapter.getRemoteDevice(address);
+                if (device == null) {
+                    connectSuccess = false;
+                    return null;
+                }
                 // Create a RFCOMM (SPP) connection
                 btSocket = device.createInsecureRfcommSocketToServiceRecord(statUUID);
                 BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
@@ -78,6 +87,15 @@ public class BluetoothConnection extends AsyncTask<Void, Void, Void> {
         Intent intent = new Intent(BLUETOOTH_CONNECTED_ACTION);
         intent.putExtra("success", connectSuccess);
         context.sendBroadcast(intent);
+    }
+
+    public void disconnect() {
+        try {
+            btSocket.close();
+        } catch (IOException e) {
+            Log.i(TAG, "Failed to disconnect bluetooth");
+            e.printStackTrace();
+        }
     }
 
     public void send(String s) {

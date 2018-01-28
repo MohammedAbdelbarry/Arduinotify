@@ -47,6 +47,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.IllegalFormatException;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements ColorPickerDialogListener
@@ -302,13 +303,26 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
     }
 
     public void connectClicked(MenuItem item) {
-        try {
-            btConnection = new BluetoothConnection(this, HC05_MAC_ADDRESS);
-            btConnection.execute();
-        } catch (Exception e) {
-            Toast.makeText(getApplicationContext(), "Failed to Connect to HC-05", Toast.LENGTH_LONG);
-            e.printStackTrace();
+        btConnection = new BluetoothConnection(this, HC05_MAC_ADDRESS);
+        btConnection.execute();
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        drawer.closeDrawers();
+//        MenuItem disconnect = findViewById(R.id.disconnect);
+//        if (disconnect != null) {
+//            item.setVisible(false);
+//            disconnect.setVisible(true);
+//        }
+    }
+
+    public void disconnectClicked(MenuItem item) {
+        if (btConnection != null) {
+            btConnection.disconnect();
         }
+//        MenuItem connect = findViewById(R.id.connect);
+//        if (connect != null) {
+//            item.setVisible(false);
+//            connect.setVisible(true);
+//        }
     }
 
     @Override
@@ -323,16 +337,27 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
             Log.i(TAG, "**********BluetoothConnectionReceiver**********");
             Log.i(TAG, "**********onReceive**********");
             boolean success = intent.getBooleanExtra("success", false);
+            Log.i(TAG, "" + success);
             if (success) {
-                Date now = new Date();
-                DateFormat timeFormat = new SimpleDateFormat("HH;mm;ss;");
-                DateFormat dateFormat = new SimpleDateFormat("dd;MM;yyyy;");
-                String time = "clock;" + timeFormat.format(now);
-                String date = "date;" + dateFormat.format(now);
-                btConnection.send(date + time);
+                Toast.makeText(MainActivity.this, "Connected Successfully to HC-05", Toast.LENGTH_SHORT).show();
+                try {
+                    Date now = new Date();
+                    DateFormat dateFormat = new SimpleDateFormat("'date';dd;MM;yyyy;HH;mm;ss;E");
+//                    DateFormat timeFormat = new SimpleDateFormat("");
+//                    DateFormat weekDayFormat = new SimpleDateFormat("u;");
+                    String date = dateFormat.format(now);
+//                    String time = timeFormat.format(now);
+//                    String weekDayInt = weekDayFormat.format(now);
+                    Log.i(TAG, "Sent Date: " + date);
+                    btConnection.send(date + "|");
+                } catch (IllegalArgumentException e) {
+                    Toast.makeText(MainActivity.this, "Failed to get time", Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
+                }
                 sendTemprature();
             } else {
                 btConnection = null;
+                Toast.makeText(MainActivity.this, "Failed to connect to HC-05", Toast.LENGTH_LONG).show();
             }
         }
         private void sendTemprature() {
@@ -356,7 +381,7 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
                         float currentTemp = currentWeather.weather.temperature.getTemp();
                         Log.i(TAG, "City ["+currentWeather.weather.location.getCity()+"] Current temp ["+currentTemp+"C]");
                         int temp = (int) (currentTemp + 0.5f);
-                        btConnection.send("temp;" + temp + ";");
+                        btConnection.send("temp;" + temp + "|");
                     }
 
                     @Override
@@ -426,7 +451,7 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
                 String colorString = "" + Color.red(color) + ";" + Color.green(color)
                         + ";" + Color.blue(color);
                 String msg = "post;" + getAppName(packageName) + ";" + colorString;
-                btConnection.send(msg);
+                btConnection.send(msg + "|");
             } else {
                 Toast.makeText(getApplicationContext(), "Connect to HC-05 first.",
                         Toast.LENGTH_LONG);
@@ -442,7 +467,7 @@ public class MainActivity extends AppCompatActivity implements ColorPickerDialog
 
             if (btConnection != null) {
                 Log.i(TAG, "Sent 'Removal' via bluetooth.");
-                btConnection.send("rem;" + getAppName(packageName));
+                btConnection.send("rem;" + getAppName(packageName) + "|");
             } else {
                 Toast.makeText(getApplicationContext(), "Connect to HC-05 first.",
                         Toast.LENGTH_LONG);

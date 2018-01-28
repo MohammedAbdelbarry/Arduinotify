@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <group android:checkableBehavior="single">
+    <group android:checkableBehavior="none" android:id="@+id/group">
         <item
             android:id="@+id/connect"
             android:icon="@android:drawable/stat_sys_data_bluetooth"
             android:title="Connect"
             android:onClick="connectClicked" />
         <item
+            android:id="@+id/disconnect"
+            android:icon="@android:drawable/stat_sys_data_bluetooth"
+            android:title="Disconnect"
+            android:onClick="disconnectClicked" />
+        <item
             android:id="@+id/configure"
             android:icon="@android:drawable/ic_menu_manage"
             android:title="Configure"
-            android:onClick="configClicked"  />
+            android:onClick="configClicked" />
 
         <item
             android:id="@+id/logger"
